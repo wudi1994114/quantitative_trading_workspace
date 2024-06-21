@@ -1,6 +1,0 @@
-{
-    "files.defaultLanguage": "python",
-    "python.analysis.extraPaths": [
-        "./first_try"
-    ]
-}
