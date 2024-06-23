@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from PyQt5.QtWidgets import QApplication
 
 from enum import Enum
 import sys
@@ -27,7 +28,9 @@ class URL(Enum):
 
 class WebScraper:
     def __init__(self, target_url_enum, **url_params):
-        self.driver = webdriver.Chrome()
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")  # 开启无头模式
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         self.target_url = target_url_enum.generate_url(**url_params)
         self.target_url_part = 'push2.eastmoney.com/api/qt/stock/trends2/sse'
         self.driver.request_interceptor = self.request_interceptor
@@ -51,5 +54,9 @@ class WebScraper:
             self.driver.quit()
 
 if __name__ == "__main__":
+    app = QApplication(sys.argv)
     scraper = WebScraper(URL.EAST_MONEY, area='sh', code='603259')
     scraper.open_page_and_wait('//div')
+    while True:
+        time.sleep(10)
+        print('still alive...')

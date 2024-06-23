@@ -32,8 +32,8 @@ class StreamListener:
                             with self.lock:  # 确保线程安全
                                 self.queues[url].put(data)
                             # 立即调用callback处理这行数据
-                            # self.callback.callback(url, data)
-                            print(f"Received data: {data}")
+                            self.callback.callback(url, data)
+                            # print(f"Received data: {data}")
                 else:
                     print(f"Failed to fetch data from {url}, status code: {response.status_code}")
         except Exception as e:

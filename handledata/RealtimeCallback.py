@@ -1,7 +1,9 @@
 import json
 import pandas as pd
-import re
+import sys
 from collections import defaultdict
+import client.sss as sss
+
 
 class RealtimeCallback:
     def __init__(self):
@@ -10,7 +12,10 @@ class RealtimeCallback:
 
     def callback(self, url, data_str):
         # 将新的数据添加到缓存中
-        self.data_cache[url] += data_str
+        if self.data_cache[url] == "" or self.data_cache[url] == None:
+            self.data_cache[url] = data_str[6:]
+        else:
+            self.data_cache[url] += data_str
 
         while True:
             try:
@@ -32,6 +37,8 @@ class RealtimeCallback:
                     break
 
     def process_data(self, data):
+        if data['data'] is None or data['data'] == '':
+            return
         # 提取trends数据
         trends = data['data']['trends']
 
@@ -45,5 +52,7 @@ class RealtimeCallback:
         # 创建pandas DataFrame
         # 注意：这里的列名需要根据实际数据结构进行调整
         df = pd.DataFrame(processed_data, columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'Amount', 'VWAP'])
-
-        print(df)
+        
+        main = sss.MyWindow(df)
+        main.show()
+        
