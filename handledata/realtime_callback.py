@@ -1,14 +1,13 @@
 import json
 import pandas as pd
-import sys
 from collections import defaultdict
-import client.sss as sss
 
 
 class RealtimeCallback:
-    def __init__(self):
+    def __init__(self, plot_widget):
         # 初始化一个默认字典，用于缓存每个URL的部分数据
         self.data_cache = defaultdict(str)
+        self.plot_widget = plot_widget
 
     def callback(self, url, data_str):
         # 将新的数据添加到缓存中
@@ -53,6 +52,5 @@ class RealtimeCallback:
         # 注意：这里的列名需要根据实际数据结构进行调整
         df = pd.DataFrame(processed_data, columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'Amount', 'VWAP'])
         
-        main = sss.MyWindow(df)
-        main.show()
+        self.plot_widget.plot(df)
         
