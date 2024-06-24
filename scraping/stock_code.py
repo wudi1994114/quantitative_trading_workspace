@@ -26,9 +26,16 @@ class StockCode(Enum):
     @property
     def stock_name(self):
         return self._stock_name
+    
+    @property
+    def full_code(self):
+        return f"{self.area}{self.code}"
+
 
     def __str__(self):
         return f"Area: {self.area}, Code: {self.code}, Name: {self.stock_name}"
+    
+
 
     @classmethod
     def get_by_stock_name(cls, stock_name):
@@ -46,3 +53,4 @@ class StockCode(Enum):
         Iterate over all enum instances.
         """
         return list(cls)
+    

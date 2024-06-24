@@ -2,55 +2,59 @@ import json
 import pandas as pd
 from collections import defaultdict
 
-
 class RealtimeCallback:
-    def __init__(self, plot_widget):
-        # 初始化一个默认字典，用于缓存每个URL的部分数据
+    def __init__(self, plot_widget, stock):
+        # Initialize a default dictionary to cache partial data for each URL
         self.data_cache = defaultdict(str)
         self.plot_widget = plot_widget
+        # Dictionary to store DataFrames for each URL
+        self.data_frames = defaultdict(lambda: pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'Amount', 'VWAP']))
+        self.stock = stock
 
-    def callback(self, url, data_str):
-        # 将新的数据添加到缓存中
-        if self.data_cache[url] == "" or self.data_cache[url] == None:
-            self.data_cache[url] = data_str[6:]
+    def callback(self, stock, data_str):
+        stock = self.stock
+        # Append new data to the cache
+        if self.data_cache[stock.full_code] == "" or self.data_cache[stock.full_code] is None:
+            self.data_cache[stock.full_code] = data_str[6:]
         else:
-            self.data_cache[url] += data_str
+            self.data_cache[stock.full_code] += data_str
 
         while True:
             try:
-                print(f"解析数据: {self.data_cache[url]}")
-                # 解析缓存数据为JSON对象
-                data = json.loads(self.data_cache[url])
-                # 如果成功，处理数据并清空缓存
-                self.process_data(data)
-                self.data_cache[url] = ""
+                print(f"Parsing data for {stock.full_code}: {self.data_cache[stock.full_code]}")
+                # Parse the cached data as a JSON object
+                data = json.loads(self.data_cache[stock.full_code])
+                # If successful, process the data and clear the cache
+                self.process_data(stock, data)
+                self.data_cache[stock.full_code] = ""
                 break
             except json.JSONDecodeError as e:
-                print(f"解析数据错误: {e}")
-                # 查找错误位置
+                print(f"Data parsing error for {stock.full_code}: {e}")
+                # Find the error position
                 idx = e.pos
-                if idx < len(self.data_cache[url]):
-                    # 分割缓存数据并保留未解析部分
-                    self.data_cache[url] = self.data_cache[url][idx:]
+                if idx < len(self.data_cache[stock.full_code]):
+                    # Split the cached data and keep the unparsed part
+                    self.data_cache[stock.full_code] = self.data_cache[stock.full_code][idx:]
                 else:
                     break
 
-    def process_data(self, data):
+    def process_data(self, stock, data):
         if data['data'] is None or data['data'] == '':
             return
-        # 提取trends数据
+        # Extract trends data
         trends = data['data']['trends']
 
-        # 处理trends数据，保留日期时间和所有数据
+        # Process trends data, keeping the date-time and all other parts
         processed_data = []
         for trend in trends:
-            # 分割字符串，保留所有部分
             parts = trend.split(',')
             processed_data.append(parts)
 
-        # 创建pandas DataFrame
-        # 注意：这里的列名需要根据实际数据结构进行调整
-        df = pd.DataFrame(processed_data, columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'Amount', 'VWAP'])
+        # Create a temporary DataFrame with the new data
+        temp_df = pd.DataFrame(processed_data, columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume', 'Amount', 'VWAP'])
         
-        self.plot_widget.plot(df)
+        # Append the new data to the persistent DataFrame for the specific stock.full_code
+        self.data_frames[stock.full_code] = pd.concat([self.data_frames[stock.full_code], temp_df], ignore_index=True)
         
+        # Plot the updated DataFrame
+        self.plot_widget.plot(self.data_frames[stock.full_code], stock)
